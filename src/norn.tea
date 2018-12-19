@@ -48,7 +48,9 @@ let generateStateInfo = (source, desc) => {
                     definedActions.add(action)
                 }
             }
-            initialState[key] = initial()
+            initialState[key] = (typeof initial == "function")
+                ? initial()
+                : initial
             reducers[key] = (state, action) => {
                 let mut actions = [action]
                 if action.type == "batch" {
@@ -77,7 +79,7 @@ let generateStateInfo = (source, desc) => {
 let createState = (desc) => {
     let [reducers, initialState, definedActions] = generateStateInfo(null, desc)
     let reducer = createReducer(reducers)
-    let dispatch = (store, action) => {
+    let dispatch = (action) => {
         currentState = await reducer(currentState, action)
         for listener in subscriptions.values() {
             listener(currentState)
@@ -87,18 +89,15 @@ let createState = (desc) => {
     let actions = [...definedActions].reduce(
         (actions, type) => {
             ...actions
-            [type]: (data) => dispatch(store, {type, ...data})
+            [type]: (data) => dispatch({type, ...data})
         }
         {
-            $batch(...pairs) => dispatch(
-                store
-                {
-                    type: "batch"
-                    actions: pairs.map(
-                        ([type, data]) => {type, ...data}
-                    )
-                }
-            )
+            $batch(...pairs) => dispatch({
+                type: "batch"
+                actions: pairs.map(
+                    ([type, data]) => {type, ...data}
+                )
+            })
         }
     )
     let mut currentState = initialState
@@ -114,6 +113,7 @@ let createState = (desc) => {
 
     return {
         get state() => currentState
+        get current() => currentState
         actions
         subscribe
         get validActions() => [...validActions]

@@ -49,7 +49,8 @@ const generateStateInfo = (source, desc) => {
                     definedActions.add(action);
                 }
             }
-            initialState[key] = initial();
+            initialState[key] =
+                typeof initial === "function" ? initial() : initial;
             reducers[key] = async (state, action) => {
                 let actions = [action];
                 if (action.type === "batch") {
@@ -78,7 +79,7 @@ const createState = (desc) => {
         desc
     );
     const reducer = createReducer(reducers);
-    const dispatch = async (store, action) => {
+    const dispatch = async (action) => {
         currentState = await reducer(currentState, action);
         for (const listener of subscriptions.values()) {
             listener(currentState);
@@ -89,14 +90,14 @@ const createState = (desc) => {
         (actions, type) => ({
             ...actions,
             [type]: (data) =>
-                dispatch(store, {
+                dispatch({
                     type: type,
                     ...data
                 })
         }),
         {
             $batch: (...pairs) =>
-                dispatch(store, {
+                dispatch({
                     type: "batch",
                     actions: pairs.map(([type, data]) => ({
                         type: type,
@@ -115,6 +116,9 @@ const createState = (desc) => {
     const validActions = [...definedActions].sort();
     return {
         get state() {
+            return currentState;
+        },
+        get current() {
             return currentState;
         },
         actions: actions,
