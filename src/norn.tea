@@ -1,0 +1,123 @@
+let createReducer = (desc) => {
+    let reducers = []
+
+    for key, map of desc {
+        let reducer =
+            if typeof map == "function" {
+                break map
+            }
+            else {
+                break createReducer(map)
+            }
+        reducers.push([key, reducer])
+    }
+
+    return (state, action) => {
+        let newState = {}
+        for [key, reducer] in reducers {
+            newState[key] = await reducer(state[key], action)
+        }
+        return newState
+    }
+}
+
+let generateStateInfo = (source, desc) => {
+    let reducers = {}
+    let initialState = {}
+    let mut definedActions = Set*()
+    for key, info of desc {
+        let path = (source != null) ? "${source}.${key}" : key
+        let initial = info.initial
+
+        if initial == void {
+            let child = generateStateInfo(path, info)
+            [reducers[key], initialState[key]] = child
+            definedActions = Set*([
+                ...definedActions,
+                ...child[2]
+            ])
+        }
+        else {
+            let actionHandlers = {}
+            for action, func of info {
+                actionHandlers[action] = func
+                if action.startsWith("$") == true {
+                    definedActions.add("${path}.${action}")
+                }
+                if action.indexOf("$") > 0 {
+                    definedActions.add(action)
+                }
+            }
+            initialState[key] = initial()
+            reducers[key] = (state, action) => {
+                let mut actions = [action]
+                if action.type == "batch" {
+                    actions = action.actions
+                }
+
+                let mut newState = state
+                for action in actions {
+                    let mut type = action.type
+                    if type.startsWith("${path}.") == true {
+                        type = type[path.length + 1...]
+                    }
+                    let reducer = actionHandlers[type]
+                    if reducer != void {
+                        newState = await reducer(newState, action)
+                    }
+                }
+                return newState
+            }
+        }
+    }
+
+    return [reducers, initialState, definedActions]
+}
+
+let createState = (desc) => {
+    let [reducers, initialState, definedActions] = generateStateInfo(null, desc)
+    let reducer = createReducer(reducers)
+    let dispatch = (store, action) => {
+        currentState = await reducer(currentState, action)
+        for listener in subscriptions.values() {
+            listener(currentState)
+        }
+        return currentState
+    }
+    let actions = [...definedActions].reduce(
+        (actions, type) => {
+            ...actions
+            [type]: (data) => dispatch(store, {type, ...data})
+        }
+        {
+            $batch(...pairs) => dispatch(
+                store
+                {
+                    type: "batch"
+                    actions: pairs.map(
+                        ([type, data]) => {type, ...data}
+                    )
+                }
+            )
+        }
+    )
+    let mut currentState = initialState
+
+    let subscriptions = Map*()
+    let subscribe = (listener) => {
+        let key = "${Math.random()}:${Date.now()}"
+        subscriptions.set(key, listener)
+
+        return () => subscriptions.delete(key)
+    }
+    let validActions = [...definedActions].sort()
+
+    return {
+        get state() => currentState
+        actions
+        subscribe
+        get validActions() => [...validActions]
+    }
+}
+
+export default createState
