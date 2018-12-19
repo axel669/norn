@@ -1,0 +1,21 @@
+let norn = require("../norn.js")
+
+let {actions, ...store} = norn({
+    a: {
+        initial: 0
+        $add(a, {value}) => a + value
+    }
+    b: {
+        c: {
+            initial() => [1, 2, 3]
+        }
+        d: {
+            initial: "wat"
+        }
+    }
+})
+
+(() => {
+    console.log(store.state)
+    console.log(await actions."a.$add"({value: 10}))
+})()
