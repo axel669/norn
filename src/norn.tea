@@ -76,7 +76,7 @@ let generateStateInfo = (source, desc) => {
     return [reducers, initialState, definedActions]
 }
 
-let createState = (desc) => {
+let createState = (desc, actionProcessors = {}) => {
     let [reducers, initialState, definedActions] = generateStateInfo(null, desc)
     let reducer = createReducer(reducers)
     let dispatch = (action) => {
@@ -88,8 +88,11 @@ let createState = (desc) => {
     }
     let actions = [...definedActions].reduce(
         (actions, type) => {
-            ...actions
-            [type]: (data) => dispatch({type, ...data})
+            let preProcessor = actionProcessors[type] ?? (i) => i
+            return {
+                ...actions
+                [type]: (...args) => dispatch({type, ...preProcessor(...args)})
+            }
         }
         {
             $batch(...pairs) => dispatch({

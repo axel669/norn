@@ -73,7 +73,7 @@ const generateStateInfo = (source, desc) => {
     }
     return [reducers, initialState, definedActions];
 };
-const createState = (desc) => {
+const createState = (desc, actionProcessors = {}) => {
     const [reducers, initialState, definedActions] = generateStateInfo(
         null,
         desc
@@ -87,14 +87,22 @@ const createState = (desc) => {
         return currentState;
     };
     const actions = [...definedActions].reduce(
-        (actions, type) => ({
-            ...actions,
-            [type]: (data) =>
-                dispatch({
-                    type: type,
-                    ...data
-                })
-        }),
+        (actions, type) => {
+            var nullref0;
+
+            const preProcessor =
+                (nullref0 = actionProcessors[type]) != null
+                    ? nullref0
+                    : (i) => i;
+            return {
+                ...actions,
+                [type]: (...args) =>
+                    dispatch({
+                        type: type,
+                        ...preProcessor(...args)
+                    })
+            };
+        },
         {
             $batch: (...pairs) =>
                 dispatch({

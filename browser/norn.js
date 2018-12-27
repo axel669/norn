@@ -74,7 +74,7 @@ var Norn = (function () {
         }
         return [reducers, initialState, definedActions];
     };
-    const createState = (desc) => {
+    const createState = (desc, actionProcessors = {}) => {
         const [reducers, initialState, definedActions] = generateStateInfo(
             null,
             desc
@@ -88,14 +88,22 @@ var Norn = (function () {
             return currentState;
         };
         const actions = [...definedActions].reduce(
-            (actions, type) => ({
-                ...actions,
-                [type]: (data) =>
-                    dispatch({
-                        type: type,
-                        ...data
-                    })
-            }),
+            (actions, type) => {
+                var nullref0;
+
+                const preProcessor =
+                    (nullref0 = actionProcessors[type]) != null
+                        ? nullref0
+                        : (i) => i;
+                return {
+                    ...actions,
+                    [type]: (...args) =>
+                        dispatch({
+                            type: type,
+                            ...preProcessor(...args)
+                        })
+                };
+            },
             {
                 $batch: (...pairs) =>
                     dispatch({
