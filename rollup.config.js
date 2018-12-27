@@ -11,6 +11,10 @@ export default {
             file: "browser/norn.js",
             format: "iife",
             name: "Norn"
+        },
+        {
+            file: "es6/norn.js",
+            format: "es"
         }
     ],
     plugins: [
