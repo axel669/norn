@@ -8,7 +8,7 @@ export default {
             format: "cjs"
         },
         {
-            file: "browser/norn.js",
+            file: "standalone/norn.js",
             format: "iife",
             name: "Norn"
         },
