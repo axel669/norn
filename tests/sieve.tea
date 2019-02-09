@@ -13,6 +13,10 @@ let app = norn({
         initial: 0
         "*.$rand"(count) => count + 1
     }
+    count2: {
+        initial: 0
+        "*.$rand"(count) => count + 2
+    }
 })
 
 app.subscribe((state) => console.log(state))

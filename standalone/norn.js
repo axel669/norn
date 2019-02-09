@@ -30,7 +30,7 @@ var Norn = (function () {
         const reducers = {};
         const initialState = {};
         let definedActions = new Set();
-        const sieves = [];
+        const sieves = {};
         for (const key of Object.keys((ref0 = desc))) {
             const info = ref0[key];
             const path = source !== null ? `${source}.${key}` : key;
@@ -41,6 +41,7 @@ var Norn = (function () {
                 definedActions = new Set([...definedActions, ...child[2]]);
             } else {
                 const actionHandlers = {};
+                sieves[key] = [];
                 for (const action of Object.keys((ref1 = info))) {
                     const func = ref1[action];
                     if (action.indexOf("*") !== -1) {
@@ -48,7 +49,7 @@ var Norn = (function () {
                             .replace(/\./g, "\\.")
                             .replace(/\$/g, "\\$")
                             .replace(/\*/g, ".*?");
-                        sieves.push([RegExp(`^${regexText}$`), func]);
+                        sieves[key].push([RegExp(`^${regexText}$`), func]);
                     } else {
                         actionHandlers[action] = func;
                         if (action.startsWith("$") === true) {
@@ -76,7 +77,7 @@ var Norn = (function () {
                         if (reducer !== undefined) {
                             newState = await reducer(newState, action);
                         } else {
-                            for (const [sieve, reducer] of sieves) {
+                            for (const [sieve, reducer] of sieves[key]) {
                                 if (sieve.test(action.type) === true) {
                                     newState = reducer(newState, action);
                                     break;

@@ -25,7 +25,7 @@ let generateStateInfo = (source, desc) => {
     let reducers = {}
     let initialState = {}
     let mut definedActions = Set*()
-    let sieves = []
+    let sieves = {}
     for key, info of desc {
         let path = (source != null) ? "${source}.${key}" : key
         let initial = info.initial
@@ -40,13 +40,14 @@ let generateStateInfo = (source, desc) => {
         }
         else {
             let actionHandlers = {}
+            sieves[key] = []
             for action, func of info {
                 if action.indexOf("*") != -1 {
                     let regexText = action
                         .replace(/\./g, "\\.")
                         .replace(/\$/g, "\\$")
                         .replace(/\*/g, ".*?")
-                    sieves.push([
+                    sieves[key].push([
                         RegExp(`^${regexText}$`)
                         func
                     ])
@@ -81,7 +82,7 @@ let generateStateInfo = (source, desc) => {
                         newState = await reducer(newState, action)
                     }
                     else {
-                        for [sieve, reducer] in sieves {
+                        for [sieve, reducer] in sieves[key] {
                             if sieve.test(action.type) == true {
                                 newState = reducer(newState, action)
                                 break
