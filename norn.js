@@ -29,6 +29,7 @@ const generateStateInfo = (source, desc) => {
     const reducers = {};
     const initialState = {};
     let definedActions = new Set();
+    const sieves = [];
     for (const key of Object.keys((ref0 = desc))) {
         const info = ref0[key];
         const path = source !== null ? `${source}.${key}` : key;
@@ -41,12 +42,20 @@ const generateStateInfo = (source, desc) => {
             const actionHandlers = {};
             for (const action of Object.keys((ref1 = info))) {
                 const func = ref1[action];
-                actionHandlers[action] = func;
-                if (action.startsWith("$") === true) {
-                    definedActions.add(`${path}.${action}`);
-                }
-                if (action.indexOf("$") > 0) {
-                    definedActions.add(action);
+                if (action.indexOf("*") !== -1) {
+                    const regexText = action
+                        .replace(/\./g, "\\.")
+                        .replace(/\$/g, "\\$")
+                        .replace(/\*/g, ".*?");
+                    sieves.push([RegExp(`^${regexText}$`), func]);
+                } else {
+                    actionHandlers[action] = func;
+                    if (action.startsWith("$") === true) {
+                        definedActions.add(`${path}.${action}`);
+                    }
+                    if (action.indexOf("$") > 0) {
+                        definedActions.add(action);
+                    }
                 }
             }
             initialState[key] =
@@ -65,6 +74,13 @@ const generateStateInfo = (source, desc) => {
                     const reducer = actionHandlers[type];
                     if (reducer !== undefined) {
                         newState = await reducer(newState, action);
+                    } else {
+                        for (const [sieve, reducer] of sieves) {
+                            if (sieve.test(action.type) === true) {
+                                newState = reducer(newState, action);
+                                break;
+                            }
+                        }
                     }
                 }
                 return newState;
