@@ -28,6 +28,31 @@ providers: [
               stdin: false
           version: 2
         }
+        {
+          project: "C:\\Users\\cmorgan\\Documents\\git\\norn"
+          source: "C:\\Users\\cmorgan\\Documents\\git\\norn\\.build-tools.cson"
+          name: "Build Connect"
+          command: "npm run build-connect"
+          wd: "."
+          env: {}
+          modifier:
+            save_all: {}
+          environment:
+            name: "child_process"
+            config:
+              stdoe: "both"
+          stdout:
+            pipeline: []
+          stderr:
+            pipeline: []
+          output:
+            console:
+              close_success: true
+              queue_in_buffer: true
+              colors: true
+              stdin: false
+          version: 2
+        }
       ]
   }
 ]

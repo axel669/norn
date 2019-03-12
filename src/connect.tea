@@ -1,0 +1,20 @@
+import {PureComponent} from "react"
+
+let connect = (app, reducer = (state, props) => state) =>
+    (Component) => class extends PureComponent {
+        constructor(props) => {
+            super(props)
+            @state = reducer(app.state, @props)
+            @unsub = app.subscribe(
+                (newState) => @setState(
+                    () => reducer(newState, @props)
+                )
+            )
+        }
+
+        componentWillUnmount() => @unsub()
+
+        render() => <Component {...{...@props, ...@state}} />
+    }
+
+export default connect
