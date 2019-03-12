@@ -8,7 +8,7 @@ export default {
             format: "cjs"
         },
         {
-            file: "browser/connect.js",
+            file: "standalone/connect.js",
             format: "iife",
             name: "NornConnect",
             globals: {
