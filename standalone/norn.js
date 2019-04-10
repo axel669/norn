@@ -125,10 +125,18 @@ var Norn = (function () {
                 $batch: (...pairs) =>
                     dispatch({
                         type: "batch",
-                        actions: pairs.map(([type, data]) => ({
-                            type: type,
-                            ...data
-                        }))
+                        actions: pairs.map(([type, ...args]) => {
+                            var nullref0;
+
+                            const preProcessor =
+                                (nullref0 = actionProcessors[type]) != null
+                                    ? nullref0
+                                    : (i) => i;
+                            return {
+                                type: type,
+                                ...preProcessor(...args)
+                            };
+                        })
                     })
             }
         );

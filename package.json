@@ -1,6 +1,6 @@
 {
   "name": "@axel669/norn",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "lightweight state management library",
   "main": "norn.js",
   "scripts": {
@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "@axel669/teascript": "^0.14.0",
+    "@axel669/teascript": "^0.14.4",
     "rollup": "^0.68.2"
   }
 }

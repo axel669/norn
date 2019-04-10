@@ -1,7 +1,13 @@
 var NornConnect = (function (react) {
     'use strict';
 
-    const connect = (app, reducer = (state, props) => state) => (Component) => {
+    const connect = (
+        app,
+        reducer = (state, props) => ({
+            ...props,
+            ...state
+        })
+    ) => (Component) => {
 
         return class extends react.PureComponent {
             constructor(props) {

@@ -1,6 +1,12 @@
 import { PureComponent } from 'react';
 
-const connect = (app, reducer = (state, props) => state) => (Component) => {
+const connect = (
+    app,
+    reducer = (state, props) => ({
+        ...props,
+        ...state
+    })
+) => (Component) => {
 
     return class extends PureComponent {
         constructor(props) {
