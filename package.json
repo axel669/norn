@@ -22,5 +22,11 @@
   "devDependencies": {
     "@axel669/teascript": "^0.14.4",
     "rollup": "^0.68.2"
-  }
+  },
+  "files": [
+    "/es6",
+    "/standalone",
+    "connect.js",
+    "norn.js"
+  ]
 }
