@@ -140,11 +140,13 @@ let createState = (desc, actionProcessors = {}) => {
     let validActions = [...definedActions].sort()
 
     return {
-        get state() => currentState
-        get current() => currentState
         actions
-        subscribe
-        get validActions() => [...validActions]
+        store: {
+            get state() => currentState
+            get current() => currentState
+            subscribe
+            get validActions() => [...validActions]
+        }
     }
 }
 

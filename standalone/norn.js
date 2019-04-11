@@ -149,16 +149,18 @@ var Norn = (function () {
         };
         const validActions = [...definedActions].sort();
         return {
-            get state() {
-                return currentState;
-            },
-            get current() {
-                return currentState;
-            },
             actions: actions,
-            subscribe: subscribe,
-            get validActions() {
-                return [...validActions];
+            store: {
+                get state() {
+                    return currentState;
+                },
+                get current() {
+                    return currentState;
+                },
+                subscribe: subscribe,
+                get validActions() {
+                    return [...validActions];
+                }
             }
         };
     };

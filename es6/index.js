@@ -1,5 +1,3 @@
-'use strict';
-
 const createReducer = (desc) => {
     var ref0;
 
@@ -148,18 +146,20 @@ const createState = (desc, actionProcessors = {}) => {
     };
     const validActions = [...definedActions].sort();
     return {
-        get state() {
-            return currentState;
-        },
-        get current() {
-            return currentState;
-        },
         actions: actions,
-        subscribe: subscribe,
-        get validActions() {
-            return [...validActions];
+        store: {
+            get state() {
+                return currentState;
+            },
+            get current() {
+                return currentState;
+            },
+            subscribe: subscribe,
+            get validActions() {
+                return [...validActions];
+            }
         }
     };
 };
 
-module.exports = createState;
+export default createState;

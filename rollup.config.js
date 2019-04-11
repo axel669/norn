@@ -4,7 +4,7 @@ export default {
     input: "src/norn.tea",
     output: [
         {
-            file: "norn.js",
+            file: "index.js",
             format: "cjs"
         },
         {
@@ -13,7 +13,7 @@ export default {
             name: "Norn"
         },
         {
-            file: "es6/norn.js",
+            file: "es6/index.js",
             format: "es"
         }
     ],

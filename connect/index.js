@@ -2,20 +2,14 @@
 
 var react = require('react');
 
-const connect = (
-    app,
-    reducer = (state, props) => ({
-        ...props,
-        ...state
-    })
-) => (Component) => {
+const connect = (app, reducer = (state) => state) => (Component) => {
 
     return class extends react.PureComponent {
         constructor(props) {
             super(props);
             this.state = reducer(app.state, this.props);
             this.unsub = app.subscribe((newState) =>
-                this.setState(() => reducer(newState, this.props))
+                this.setState(() => reducer(newState))
             );
         }
         componentWillUnmount() {

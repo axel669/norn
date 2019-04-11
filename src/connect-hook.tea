@@ -1,0 +1,18 @@
+import {useEffect} from "react"
+
+let useDidMount = (effect) => useEffect(effect, [])
+let connect = (store, reducer = (state) => state) => (Component) =>
+    (props) => {
+        let [state, updateState] = React.useState(store.state)
+        useDidMount(
+            () => store.subscribe(
+                (latest) => updateState(
+                    reducer(latest)
+                )
+            )
+        )
+
+        return <Component {...{...state, ...props}} />
+    }
+
+export default connect
