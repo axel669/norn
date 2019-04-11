@@ -5,7 +5,7 @@ var NornConnectHook = (function (react) {
     const connect = (store, reducer = (state) => state) => (Component) => (
         props
     ) => {
-        const [state, updateState] = React.useState(store.state);
+        const [state, updateState] = React.useState(reducer(store.state));
         useDidMount(() =>
             store.subscribe((latest) => updateState(reducer(latest)))
         );
