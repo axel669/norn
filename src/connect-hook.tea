@@ -1,20 +1,33 @@
 import {useEffect} from "react"
 
 let useDidMount = (effect) => useEffect(effect, [])
-let connect = (store, reducer = (state) => state) => (Component) =>
-    (props) => {
-        let [state, updateState] = React.useState(
-            reducer(store.state)
-        )
-        useDidMount(
-            () => store.subscribe(
-                (latest) => updateState(
-                    reducer(latest)
+let connect = (store, reducer = (state) => state) =>
+    (Component) => {
+        let wrapper = (props) => {
+            let [state, updateState] = React.useState(
+                reducer(store.state)
+            )
+            useDidMount(
+                () => store.subscribe(
+                    (latest) => updateState(
+                        reducer(latest)
+                    )
                 )
             )
+
+            return <Component {...{...state, ...props}} />
+        }
+        Object.defineProperty(
+            wrapper
+            "name"
+            {
+                enumerable: false
+                configurable: false
+                get() => `Connected(${Component.name ?? Component.displayName})`
+            }
         )
 
-        return <Component {...{...state, ...props}} />
+        return wrapper
     }
 
 export default connect
