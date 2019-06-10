@@ -1,5 +1,3 @@
-'use strict';
-
 const actions = {
     $set: (source, value) => value,
     $unset: (source, names) => {
@@ -258,4 +256,4 @@ const createStore = (desc, actionProcessors = {}) => {
   };
 };
 
-module.exports = createStore;
+export default createStore;
