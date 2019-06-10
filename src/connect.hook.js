@@ -5,12 +5,12 @@ const connect = (store, reducer = (state) => state) =>
     (Component) => {
         function Wrapper(props) {
             const [state, updateState] = useState(
-                reducer(store.state)
+                reducer(store.state, props)
             )
             useDidMount(
                 () => store.subscribe(
                     (latest) => updateState(
-                        reducer(latest)
+                        reducer(latest, props)
                     )
                 )
             )

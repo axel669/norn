@@ -4,8 +4,8 @@ const useDidMount = effect => useEffect(effect, []);
 
 const connect = (store, reducer = state => state) => Component => {
   function Wrapper(props) {
-    const [state, updateState] = useState(reducer(store.state));
-    useDidMount(() => store.subscribe(latest => updateState(reducer(latest))));
+    const [state, updateState] = useState(reducer(store.state, props));
+    useDidMount(() => store.subscribe(latest => updateState(reducer(latest, props))));
     return React.createElement(Component, { ...state,
       ...props
     });

@@ -22,7 +22,7 @@ const connect = (app, reducer = state => state) => Component => {
     constructor(props) {
       super(props);
       this.state = reducer(app.state, props);
-      this.unsub = app.subscribe(newState => this.setState(() => reducer(newState)));
+      this.unsub = app.subscribe(newState => this.setState(() => reducer(newState, props)));
     }
 
     componentWillUnmount() {
