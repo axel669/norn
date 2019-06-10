@@ -33,9 +33,9 @@
     "rollup-plugin-node-resolve": "^5.0.1"
   },
   "files": [
-    "/es6",
+    "/esm",
     "/standalone",
-    "connect.js",
-    "norn.js"
+    "/connect",
+    "index.js"
   ]
 }
