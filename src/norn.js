@@ -1,3 +1,5 @@
+import update from "@axel669/immutable-update/esm"
+
 const createReducer = (desc) => {
     const reducers = []
 
@@ -76,12 +78,13 @@ const generateStateInfo = (source, desc) => {
                             return reducer(newState, action)
                         }
                         else {
-                            for (const [sieve, reducer] of sieves) {
+                            for (const [sieve, reducer] of sieves[key]) {
                                 if (sieve.test(type) === true) {
                                     return reducer(newState, action)
                                 }
                             }
                         }
+                        return newState
                     },
                     state
                 )
@@ -116,6 +119,7 @@ const createStore = (desc, actionProcessors = {}) => {
                 else {
                     pp[type] = info
                 }
+                return pp
             },
             {}
         )
@@ -134,6 +138,7 @@ const createStore = (desc, actionProcessors = {}) => {
         (actions, type) => {
             const pp = preprocessors[type] || (i => i)
             actions[type] = (...args) => dispatch({type, ...pp(...args)})
+            return actions
         },
         {
             $batch: (...pairs) => dispatch({
@@ -157,7 +162,7 @@ const createStore = (desc, actionProcessors = {}) => {
     const validActions = [...definedActions].sort()
 
     return {
-        actions,
+        actions: update.expand(actions),
         store: {
             get state() {
                 return currentState
@@ -172,3 +177,5 @@ const createStore = (desc, actionProcessors = {}) => {
         }
     }
 }
+
+export default createStore

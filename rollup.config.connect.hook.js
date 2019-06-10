@@ -1,23 +1,26 @@
-import resolve from "rollup-plugin-node-resolve"
 import babel from "rollup-plugin-babel"
 
 export default {
-    input: "src/norn.js",
+    input: "src/connect.hook.js",
     output: [
         {
-            file: "index.js",
+            file: "connect/hook/index.js",
             format: "cjs"
         },
         {
-            file: "standalone/norn.js",
+            file: "standalone/connect/hook.js",
             format: "iife",
-            name: "Norn"
+            name: "NornConnect.Hook",
+            globals: {
+                "react": "React"
+            }
         },
         {
-            file: "esm/index.js",
+            file: "esm/connect/hook/index.js",
             format: "esm"
         }
     ],
+    external: ["react"],
     plugins: [
         babel({
             exclude: "node_modules/**",
@@ -28,7 +31,6 @@ export default {
                 "@babel/plugin-proposal-optional-chaining",
                 "@babel/plugin-proposal-nullish-coalescing-operator"
             ]
-        }),
-        resolve()
+        })
     ]
 }
