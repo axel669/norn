@@ -1,4 +1,4 @@
-import { PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 
 function _defineProperty(obj, key, value) {
   if (key in obj) {

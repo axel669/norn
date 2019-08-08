@@ -1,4 +1,4 @@
-import {PureComponent} from "react"
+import React, {PureComponent} from "react"
 
 const connect = (app, reducer = (state) => state) =>
     (Component) => class extends PureComponent {

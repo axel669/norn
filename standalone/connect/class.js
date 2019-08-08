@@ -1,6 +1,8 @@
 this.NornConnect = this.NornConnect || {};
-this.NornConnect.Class = (function (react) {
+this.NornConnect.Class = (function (React) {
   'use strict';
+
+  var React__default = 'default' in React ? React['default'] : React;
 
   function _defineProperty(obj, key, value) {
     if (key in obj) {
@@ -20,7 +22,7 @@ this.NornConnect.Class = (function (react) {
   const connect = (app, reducer = state => state) => Component => {
     var _class, _temp, _Component$name;
 
-    return _temp = _class = class extends react.PureComponent {
+    return _temp = _class = class extends React.PureComponent {
       constructor(props) {
         super(props);
         this.state = reducer(app.state, props);
@@ -32,7 +34,7 @@ this.NornConnect.Class = (function (react) {
       }
 
       render() {
-        return React.createElement(Component, { ...this.props,
+        return React__default.createElement(Component, { ...this.props,
           ...this.state
         });
       }

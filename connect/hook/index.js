@@ -1,14 +1,17 @@
 'use strict';
 
-var react = require('react');
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-const useDidMount = effect => react.useEffect(effect, []);
+var React = require('react');
+var React__default = _interopDefault(React);
+
+const useDidMount = effect => React.useEffect(effect, []);
 
 const connect = (store, reducer = state => state) => Component => {
   function Wrapper(props) {
-    const [state, updateState] = react.useState(reducer(store.state, props));
+    const [state, updateState] = React.useState(reducer(store.state, props));
     useDidMount(() => store.subscribe(latest => updateState(reducer(latest, props))));
-    return React.createElement(Component, { ...state,
+    return React__default.createElement(Component, { ...state,
       ...props
     });
   }

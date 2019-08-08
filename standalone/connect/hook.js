@@ -1,14 +1,16 @@
 this.NornConnect = this.NornConnect || {};
-this.NornConnect.Hook = (function (react) {
+this.NornConnect.Hook = (function (React) {
     'use strict';
 
-    const useDidMount = effect => react.useEffect(effect, []);
+    var React__default = 'default' in React ? React['default'] : React;
+
+    const useDidMount = effect => React.useEffect(effect, []);
 
     const connect = (store, reducer = state => state) => Component => {
       function Wrapper(props) {
-        const [state, updateState] = react.useState(reducer(store.state, props));
+        const [state, updateState] = React.useState(reducer(store.state, props));
         useDidMount(() => store.subscribe(latest => updateState(reducer(latest, props))));
-        return React.createElement(Component, { ...state,
+        return React__default.createElement(Component, { ...state,
           ...props
         });
       }

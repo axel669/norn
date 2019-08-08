@@ -1,6 +1,9 @@
 'use strict';
 
-var react = require('react');
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var React = require('react');
+var React__default = _interopDefault(React);
 
 function _defineProperty(obj, key, value) {
   if (key in obj) {
@@ -20,7 +23,7 @@ function _defineProperty(obj, key, value) {
 const connect = (app, reducer = state => state) => Component => {
   var _class, _temp, _Component$name;
 
-  return _temp = _class = class extends react.PureComponent {
+  return _temp = _class = class extends React.PureComponent {
     constructor(props) {
       super(props);
       this.state = reducer(app.state, props);
@@ -32,7 +35,7 @@ const connect = (app, reducer = state => state) => Component => {
     }
 
     render() {
-      return React.createElement(Component, { ...this.props,
+      return React__default.createElement(Component, { ...this.props,
         ...this.state
       });
     }
