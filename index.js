@@ -57,8 +57,11 @@ const internal_setValues = (dest, key, n, value, create) => {
 };
 
 const splitKey = key => key
-    .split(/(?<!\.)\.(?!\.)/)
-    .map(part => part.replace(/\.\./g, "."));
+    .replace(/\.\./g, "\x01")
+    .split(/\./)
+    .map(part => part.replace(/\x01/g, "."));
+    // .split(/(?<!\.)\.(?!\.)/)
+    // .map(part => part.replace(/\.\./g, "."))
 const update = (source, obj, createIfUndefined = false) => Object.keys(obj)
     .reduce(
         (source, key) => internal_setValues(
