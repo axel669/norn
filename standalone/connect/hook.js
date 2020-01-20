@@ -6,7 +6,7 @@ this.NornConnect.Hook = (function (react) {
 
     const connect = (store, reducer = state => state) => Component => {
       function Wrapper(props) {
-        const [state, updateState] = react.useState(reducer(store.state, props));
+        const [state, updateState] = react.useState(reducer(store.getState(), props));
         useDidMount(() => store.subscribe(latest => updateState(reducer(latest, props))));
         return React.createElement(Component, { ...state,
           ...props

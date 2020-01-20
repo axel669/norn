@@ -23,7 +23,7 @@ const connect = (app, reducer = state => state) => Component => {
   return _temp = _class = class extends react.PureComponent {
     constructor(props) {
       super(props);
-      this.state = reducer(app.state, props);
+      this.state = reducer(app.getState(), props);
       this.unsub = app.subscribe(newState => this.setState(() => reducer(newState, props)));
     }
 

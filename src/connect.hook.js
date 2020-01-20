@@ -5,7 +5,10 @@ const connect = (store, reducer = (state) => state) =>
     (Component) => {
         function Wrapper(props) {
             const [state, updateState] = useState(
-                reducer(store.state, props)
+                reducer(
+                    store.getState(),
+                    props
+                )
             )
             useDidMount(
                 () => store.subscribe(

@@ -5,7 +5,10 @@ const connect = (app, reducer = (state) => state) =>
         static displayName = `Connected(${Component.name ?? Component.displayName})`
         constructor(props) {
             super(props)
-            this.state = reducer(app.state, props)
+            this.state = reducer(
+                app.getState(),
+                props
+            )
             this.unsub = app.subscribe(
                 (newState) => this.setState(
                     () => reducer(newState, props)
