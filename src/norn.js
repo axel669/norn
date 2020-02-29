@@ -1,7 +1,7 @@
 import update from "@axel669/immutable-update/esm"
 
 const subscriptionBus = () => {
-    const handlers = new WeakMap()
+    const handlers = new Map()
 
     return {
         sub: (handler) => {
