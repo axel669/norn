@@ -1,6 +1,6 @@
 {
   "name": "@axel669/norn",
-  "version": "3.0.0-alpha.0",
+  "version": "3.0.0.1",
   "description": "lightweight state management library",
   "main": "index.js",
   "scripts": {

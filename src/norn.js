@@ -17,13 +17,12 @@ const subscriptionBus = () => {
     }
 }
 
-const setProp = (source, prop, value) => {
-    const set = new Function("source", "value", `source.${prop} = value`)
-    set(source, value)
-}
 const fullName = (parent, child) =>
     (parent === null) ? child : `${parent}.${child}`
 const processSource = (name, sourceName, source, shared) => {
+    if (typeof source !== "function") {
+        throw new Error(`Handler is not a function in ${sourceName}:${name}`)
+    }
     shared.actions[name] = [
         ...(shared.actions[name] || []),
         [sourceName, source]
