@@ -9,44 +9,42 @@
         <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
 
         <script src="../standalone/norn.js"></script>
-        <script src="../standalone/connect/class.js"></script>
-        <script src="../standalone/connect/hook.js"></script>
     </head>
     <body>
         <app-root></app-root>
         <script type="text/javascript">
             let t = 0
-            const {store, actions} = Norn(
-                {
-                    list: {
-                        initial: () => [],
-                        $add: (list, {name, id}) => [...list, {name, id}],
-                        "groups.*": (list, action) => {
-                            console.log("from list ", action.type)
-                            return list
-                        }
+            const {store, actions} = norn({
+                list: {
+                    initial: [],
+                    $add: {
+                        args: ["name"],
+                        handler: (list, {name}) => {
+                            const id = t
+                            t += 1
+                            return [...list, {name, id}]
+                        },
                     },
-                    groups: {
-                        initial: {},
-                        $add: (groups, {id, item}) => ({
+                    // "groups.*": (list, action) => {
+                    //     console.log("from list ", action.type)
+                    //     return list
+                    // }
+                },
+                groups: {
+                    initial: {},
+                    $add: {
+                        args: ["id", "item"],
+                        handler: (groups, {id, item}) => ({
                             ...groups,
                             [id]: item
                         }),
-                        "list.$add": (_0, action) => {
-                            console.log("from group", action.type)
-                            return _0
-                        }
-                    }
-                },
-                {
-                    "list.$add": (name) => {
-                        let id = t
-                        t += 1
-                        return {name, id}
                     },
-                    "groups.$add": ["id", "item"]
+                    "list.$add": (_0, action) => {
+                        console.log("from group", action.type)
+                        return _0
+                    }
                 }
-            )
+            })
 
             store.subscribe(
                 (next) => console.log(next)
@@ -54,25 +52,30 @@
 
             const e = React.createElement
 
-            const ClassThing = NornConnect.Class(store)(
-                function ClassThing(props) {
-                    return e(
-                        "div",
-                        {},
-                        props.list.map(
-                            item => e("div", null, `${item.name} (${item.id})`)
-                        )
-                    )
-                }
-            )
-            const HookThing = NornConnect.Hook(store)(
-                function HookThing(props) {
-                    return e("div", null, `groups: ${Object.keys(props.groups).join(", ")}`)
-                }
-            )
+            // const ClassThing = NornConnect.Class(store)(
+            //     function ClassThing(props) {
+            //         console.log(props)
+            //         return e(
+            //             "div",
+            //             {},
+            //             props.list.map(
+            //                 item => e("div", null, `${item.name} (${item.id})`)
+            //             )
+            //         )
+            //     }
+            // )
+            // const HookThing = NornConnect.Hook(store)(
+            //     function HookThing(props) {
+            //         return e("div", null, `groups: ${Object.keys(props.groups).join(", ")}`)
+            //     }
+            // )
+            const HookThing = function HookThing(props) {
+                const {groups} = norn.useStore(store)
+                return e("div", null, `groups: ${Object.keys(groups).join(", ")}`)
+            }
 
             function Main() {
-                return e("div", null, e(ClassThing), e(HookThing))
+                return e("div", null, e(HookThing))
             }
             ReactDOM.render(
                 e(Main),

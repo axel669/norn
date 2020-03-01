@@ -1,12 +1,11 @@
 {
   "name": "@axel669/norn",
-  "version": "3.0.0.1",
+  "version": "3.0.0-alpha.2",
   "description": "lightweight state management library",
   "main": "index.js",
   "scripts": {
     "test": "node tests/small-test-all.js",
-    "build": "rollup -c",
-    "build-all": "rollup -c && rollup -c rollup.config.connect.class.js && rollup -c rollup.config.connect.hook.js"
+    "build": "rollup -c"
   },
   "keywords": [
     "state",
@@ -34,7 +33,6 @@
   "files": [
     "/esm",
     "/standalone",
-    "/connect",
     "index.js"
   ]
 }

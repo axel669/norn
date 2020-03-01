@@ -1,3 +1,4 @@
+import {useEffect, useState} from "react"
 import update from "@axel669/immutable-update/esm"
 
 const subscriptionBus = () => {
@@ -119,5 +120,19 @@ const createStore = (descriptor) => {
         ),
     }
 }
+
+const useStore = (store) => {
+    const [current, update] = useState(store.getState())
+
+    useEffect(
+        () => store.subscribe(
+            nextState => update(nextState)
+        ),
+        []
+    )
+
+    return current
+}
+createStore.useStore = useStore
 
 export default createStore

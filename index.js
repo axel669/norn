@@ -1,5 +1,7 @@
 'use strict';
 
+var react = require('react');
+
 const actions = {
     $set: (source, value) => value,
     $unset: (source, names) => {
@@ -101,7 +103,7 @@ update.seq = (source, ...updates) => updates.reduce(
 );
 
 const subscriptionBus = () => {
-  const handlers = new WeakMap();
+  const handlers = new Map();
   return {
     sub: handler => {
       const id = `${Date.now()}:${Math.random().toString(16)}`;
@@ -209,5 +211,13 @@ const createStore = descriptor => {
     }, storeActions)
   };
 };
+
+const useStore = store => {
+  const [current, update] = react.useState(store.getState());
+  react.useEffect(() => store.subscribe(nextState => update(nextState)), []);
+  return current;
+};
+
+createStore.useStore = useStore;
 
 module.exports = createStore;

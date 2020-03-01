@@ -1,4 +1,4 @@
-var Norn = (function () {
+var norn = (function (react) {
     'use strict';
 
     const actions = {
@@ -102,7 +102,7 @@ var Norn = (function () {
     );
 
     const subscriptionBus = () => {
-      const handlers = new WeakMap();
+      const handlers = new Map();
       return {
         sub: handler => {
           const id = `${Date.now()}:${Math.random().toString(16)}`;
@@ -211,6 +211,14 @@ var Norn = (function () {
       };
     };
 
+    const useStore = store => {
+      const [current, update] = react.useState(store.getState());
+      react.useEffect(() => store.subscribe(nextState => update(nextState)), []);
+      return current;
+    };
+
+    createStore.useStore = useStore;
+
     return createStore;
 
-}());
+}(React));
