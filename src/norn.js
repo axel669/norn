@@ -95,8 +95,8 @@ const createStore = (descriptor) => {
     const storeActions = Object.keys(shared.actions)
         .reduce(
             (actions, name) => {
-                actions[name] = (arg) => {
-                    dispatch([{ type: name }, arg])
+                actions[name] = (...args) => {
+                    dispatch([{ type: name }, ...args])
                 }
                 actions[name].type = name
                 return actions
