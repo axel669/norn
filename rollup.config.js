@@ -11,7 +11,10 @@ export default {
         {
             file: "standalone/norn.js",
             format: "iife",
-            name: "Norn"
+            name: "norn",
+            globals: {
+                "react": "React",
+            },
         },
         {
             file: "esm/index.js",
@@ -26,9 +29,12 @@ export default {
             plugins: [
                 "@babel/plugin-transform-react-jsx",
                 "@babel/plugin-proposal-optional-chaining",
-                "@babel/plugin-proposal-nullish-coalescing-operator"
+                "@babel/plugin-proposal-nullish-coalescing-operator",
             ]
         }),
         resolve()
+    ],
+    external: [
+        "react",
     ]
 }

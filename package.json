@@ -1,12 +1,11 @@
 {
   "name": "@axel669/norn",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "lightweight state management library",
   "main": "index.js",
   "scripts": {
     "test": "node tests/small-test-all.js",
-    "build": "rollup -c",
-    "build-all": "rollup -c && rollup -c rollup.config.connect.class.js && rollup -c rollup.config.connect.hook.js"
+    "build": "rollup -c"
   },
   "keywords": [
     "state",
@@ -19,23 +18,15 @@
   "author": "Axel",
   "license": "MIT",
   "dependencies": {
-    "@axel669/immutable-update": "^1.0.1"
+    "@axel669/immutable-update": "^1.0.2"
   },
   "devDependencies": {
-    "@axel669/teascript": "^0.16.1",
-    "@babel/core": "^7.4.3",
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.4.3",
-    "@babel/plugin-proposal-optional-chaining": "^7.2.0",
-    "@babel/plugin-transform-react-jsx": "^7.3.0",
     "rollup": "^1.14.4",
-    "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-node-resolve": "^5.0.1"
   },
   "files": [
     "/esm",
     "/standalone",
-    "/connect",
     "index.js"
   ]
 }

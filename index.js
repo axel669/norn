@@ -1,5 +1,7 @@
 'use strict';
 
+var react = require('react');
+
 const actions = {
     $set: (source, value) => value,
     $unset: (source, names) => {
@@ -57,8 +59,11 @@ const internal_setValues = (dest, key, n, value, create) => {
 };
 
 const splitKey = key => key
-    .split(/(?<!\.)\.(?!\.)/)
-    .map(part => part.replace(/\.\./g, "."));
+    .replace(/\.\./g, "\x01")
+    .split(/\./)
+    .map(part => part.replace(/\x01/g, "."));
+    // .split(/(?<!\.)\.(?!\.)/)
+    // .map(part => part.replace(/\.\./g, "."))
 const update = (source, obj, createIfUndefined = false) => Object.keys(obj)
     .reduce(
         (source, key) => internal_setValues(
@@ -97,165 +102,122 @@ update.seq = (source, ...updates) => updates.reduce(
     source
 );
 
-const createReducer = desc => {
-  const reducers = [];
-
-  for (const [key, map] of Object.entries(desc)) {
-    const reducer = typeof map === "function" ? map : createReducer(map);
-    reducers.push([key, reducer]);
-  }
-
-  return async (state, action) => {
-    const newState = {};
-
-    for (const [key, reducer] of reducers) {
-      newState[key] = await reducer(state[key], action);
-    }
-
-    return newState;
-  };
-};
-
-const generateStateInfo = (source, desc) => {
-  const reducers = [];
-  const initialState = {};
-  const definedActions = new Set();
-  const sieves = {};
-
-  for (const [key, info] of Object.entries(desc)) {
-    const path = source !== null ? `${source}.${key}` : key;
-    const {
-      initial
-    } = info;
-
-    if (initial === undefined) {
-      const child = generateStateInfo(path, info)[(childActions)] = child;
-      definedActions.add(...childActions);
-    } else {
-      const actionHandlers = {};
-      sieves[key] = [];
-
-      for (const [action, func] of Object.entries(info)) {
-        if (action.indexOf("*") !== -1) {
-          const regexText = action.replace(/\./g, "\\.").replace(/\$/g, "\\$").replace(/\*/g, ".*?");
-          sieves[key].push([new RegExp(`^${regexText}$`), func]);
-        } else {
-          actionHandlers[action] = func;
-
-          if (action.startsWith("$") === true) {
-            definedActions.add(`${path}.${action}`);
-          }
-
-          if (action.indexOf("$") > 0) {
-            definedActions.add(action);
-          }
-        }
-      }
-
-      initialState[key] = typeof initial === "function" ? initial() : initial;
-
-      reducers[key] = (state, action) => {
-        const actions = action.type === "batch" ? action.actions : [action];
-        return actions.reduce((newState, action) => {
-          const type = action.type.startsWith(`${path}.`) === true ? action.type.slice(path.length + 1) : action.type;
-          const reducer = actionHandlers[type];
-
-          if (reducer !== undefined) {
-            return reducer(newState, action);
-          } else {
-            for (const [sieve, reducer] of sieves[key]) {
-              if (sieve.test(type) === true) {
-                return reducer(newState, action);
-              }
-            }
-          }
-
-          return newState;
-        }, state);
-      };
-    }
-  }
-
-  return [reducers, initialState, definedActions];
-};
-
-const createStore = (desc, actionProcessors = {}) => {
-  const [reducers, initialState, definedActions] = generateStateInfo(null, desc);
-  const reducer = createReducer(reducers);
-  const subscriptions = new Map();
-  const preprocessors = Object.entries(actionProcessors).reduce((pp, [type, info]) => {
-    if (Array.isArray(info) === true) {
-      pp[type] = (...args) => args.reduce((item, arg, index) => ({ ...item,
-        [info[index]]: arg
-      }), {
-        type
-      });
-    } else {
-      pp[type] = info;
-    }
-
-    return pp;
-  }, {});
-  let currentState = initialState;
-
-  const dispatch = async action => {
-    currentState = await reducer(currentState, action);
-
-    for (const handler of subscriptions.values()) {
-      handler(currentState);
-    }
-
-    return currentState;
-  };
-
-  const actions = [...definedActions].reduce((actions, type) => {
-    const pp = preprocessors[type] || (i => i);
-
-    actions[type] = (...args) => dispatch({
-      type,
-      ...pp(...args)
-    });
-
-    return actions;
-  }, {
-    $batch: (...pairs) => dispatch({
-      type: "batch",
-      actions: pairs.map(([type, ...args]) => {
-        const pp = preprocessors[type] || (i => i);
-
-        return {
-          type,
-          ...pp(...args)
-        };
-      })
-    })
-  });
-
-  const subscribe = listener => {
-    const key = `${Date.now()}:${Math.random()}`;
-    subscriptions.set(key, listener);
-    return () => subscriptions.delete(key);
-  };
-
-  const validActions = [...definedActions].sort();
+const subscriptionBus = () => {
+  const handlers = new Map();
   return {
-    actions: update.expand(actions),
-    store: {
-      get state() {
-        return currentState;
-      },
-
-      get current() {
-        return currentState;
-      },
-
-      get validActions() {
-        return [...validActions];
-      },
-
-      subscribe
+    sub: handler => {
+      const id = `${Date.now()}:${Math.random().toString(16)}`;
+      handlers.set(id, handler);
+      return () => handlers.delete(id);
+    },
+    send: data => {
+      for (const handler of handlers.values()) {
+        handler(data);
+      }
     }
   };
 };
+
+const fullName = (parent, child) => parent === null ? child : `${parent}.${child}`;
+
+const processSource = (name, sourceName, source, shared) => {
+  if (typeof source !== "function") {
+    throw new Error(`Handler is not a function in ${sourceName}:${name}`);
+  }
+
+  shared.actions[name] = [...(shared.actions[name] || []), [sourceName, source]];
+};
+
+const processRootSource = (name, sourceName, source, shared) => {
+  if (typeof source === "function") {
+    shared.preprocess[name] = firstArg => firstArg;
+
+    processSource(name, sourceName, source, shared);
+    return;
+  }
+
+  shared.preprocess[name] = typeof source.args === "function" ? source.args : (...args) => args.reduce((arg, value, index) => {
+    arg[source.args[index]] = value;
+    return arg;
+  }, {});
+  processSource(name, sourceName, source.handler, shared);
+};
+
+const processEntry = (name, entry, shared) => {
+  const {
+    initial,
+    ...actionSource
+  } = entry;
+  shared.initial[name] = initial;
+
+  for (const [type, source] of Object.entries(actionSource)) {
+    const [actionName, processor] = type.startsWith("$") === true ? [fullName(name, type), processRootSource] : [type, processSource];
+    processor(actionName, name, source, shared);
+  }
+};
+
+const processDescriptor = (parent, desc, shared) => {
+  for (const [name, subDesc] of Object.entries(desc)) {
+    const subName = fullName(parent, name);
+    const next = subDesc.initial === undefined ? processDescriptor : processEntry;
+    next(subName, subDesc, shared);
+  }
+};
+
+const createStore = descriptor => {
+  const shared = {
+    initial: {},
+    actions: {},
+    preprocess: {}
+  };
+  processDescriptor(null, descriptor, shared);
+  const subscriptions = subscriptionBus();
+  const internalState = shared.initial;
+  let expandedState = update.expand(internalState);
+
+  const dispatch = async (...actions) => {
+    for (const [action, ...args] of actions) {
+      const arg = shared.preprocess[action.type](...args);
+
+      for (const [source, func] of shared.actions[action.type]) {
+        internalState[source] = await func(internalState[source], arg, action.type);
+      }
+    }
+
+    expandedState = update.expand(internalState);
+    subscriptions.send(expandedState);
+  };
+
+  const storeActions = Object.keys(shared.actions).reduce((actions, name) => {
+    actions[name] = (...args) => {
+      dispatch([{
+        type: name
+      }, ...args]);
+    };
+
+    actions[name].type = name;
+    return actions;
+  }, {});
+  return {
+    store: {
+      getState: () => expandedState,
+      currentState: () => expandedState,
+      subscribe: subscriptions.sub
+    },
+    actions: update.expand({
+      $batch: (...actions) => {
+        dispatch(...actions);
+      }
+    }, storeActions)
+  };
+};
+
+const useStore = store => {
+  const [current, update] = react.useState(store.getState());
+  react.useEffect(() => store.subscribe(nextState => update(nextState)), []);
+  return current;
+};
+
+createStore.useStore = useStore;
 
 module.exports = createStore;
