@@ -5,52 +5,108 @@
         <meta name="viewport" content="initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width" />
         <meta charset="utf-8" />
 
-        <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
-        <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+        <script src="https://cdn.axel669.net/react/react.16.13.0.dev.js"></script>
+        <script src="https://cdn.axel669.net/react-dom/react-dom.16.13.0.dev.js"></script>
+        <script src="https://cdn.axel669.net/aml-tag/aml.1.0.1-beta.1.js"></script>
 
         <script src="../standalone/norn.js"></script>
+        <script src="../standalone/hooks.js"></script>
     </head>
     <body>
         <app-root></app-root>
         <script type="text/javascript">
-            let t = 0
-            const {store, actions} = norn({
-                list: {
-                    initial: [],
-                    $add: {
-                        args: ["name"],
-                        handler: (list, {name}) => {
-                            const id = t
-                            t += 1
-                            return [...list, {name, id}]
-                        },
-                    },
-                    // "groups.*": (list, action) => {
-                    //     console.log("from list ", action.type)
-                    //     return list
-                    // }
+            aml.settings.element = React.createElement
+
+            const {actions, store} = norn({
+                test: {
+                    initial: 0,
+                    $inc: (test) => test + 1,
+                    $dec: (test) => test - 1,
+                    $add: (test, value) => test + value
                 },
-                groups: {
-                    initial: {},
-                    $add: {
-                        args: ["id", "item"],
-                        handler: (groups, {id, item}) => ({
-                            ...groups,
-                            [id]: item
-                        }),
+                nest: {
+                    even: {
+                        initial: true,
+                        "test.$inc": (test) => test === false,
+                        "test.$dec": (test) => test === false,
                     },
-                    "list.$add": (_0, action) => {
-                        console.log("from group", action.type)
-                        return _0
+                    odd: {
+                        initial: false,
+                        toggle: odd => odd === false
                     }
                 }
             })
 
-            store.subscribe(
-                (next) => console.log(next)
-            )
+            const Child = React.memo(
+                function ChildRender() {
+                    const {odd} = norn.useStore(store, ["nest.odd"]).nest
+                    console.log("sub-render")
 
-            const e = React.createElement
+                    return aml`
+                        <div> {
+                            <button onClick=${actions.nest.odd.toggle}> {Toggle}
+                            ${odd.toString()}
+                        }
+                    `
+                }
+            )
+            function App() {
+                const {test} = norn.useStore(store)
+
+                return aml`
+                    <div> {
+                        <div> {
+                            <button onClick=${actions.test.$dec}> {
+                                dec
+                            }
+                            ${test}
+                            <button onClick=${actions.test.$inc}> {
+                                inc
+                            }
+                        }
+                        <${Child}>
+                    }
+                `
+            }
+            ReactDOM.render(
+                aml`<${App}>`,
+                document.querySelector("app-root")
+            )
+            // let t = 0
+            // const {store, actions} = norn({
+            //     list: {
+            //         initial: [],
+            //         $add: {
+            //             args: ["name"],
+            //             handler: (list, {name}) => {
+            //                 const id = t
+            //                 t += 1
+            //                 return [...list, {name, id}]
+            //             },
+            //         },
+            //         // "groups.*": (list, action) => {
+            //         //     console.log("from list ", action.type)
+            //         //     return list
+            //         // }
+            //     },
+            //     groups: {
+            //         initial: {},
+            //         $add: (groups, { id, item }) => ({
+            //             ...groups,
+            //             [id]: item
+            //         }),
+            //         "list.$add": (_0, _1, type) => {
+            //             console.log("from group", type)
+            //             return _0
+            //         }
+            //     }
+            // })
+
+            // store.subscribe(
+            //     (next) => console.log(next)
+            // )
+
+            // const e = React.createElement
 
             // const ClassThing = NornConnect.Class(store)(
             //     function ClassThing(props) {
@@ -69,18 +125,18 @@
             //         return e("div", null, `groups: ${Object.keys(props.groups).join(", ")}`)
             //     }
             // )
-            const HookThing = function HookThing(props) {
-                const {groups} = norn.useStore(store)
-                return e("div", null, `groups: ${Object.keys(groups).join(", ")}`)
-            }
+            // const HookThing = function HookThing(props) {
+            //     const {groups} = norn.useStore(store)
+            //     return e("div", null, `groups: ${Object.keys(groups).join(", ")}`)
+            // }
 
-            function Main() {
-                return e("div", null, e(HookThing))
-            }
-            ReactDOM.render(
-                e(Main),
-                document.querySelector("app-root")
-            )
+            // function Main() {
+            //     return e("div", null, e(HookThing))
+            // }
+            // ReactDOM.render(
+            //     e(Main),
+            //     document.querySelector("app-root")
+            // )
         </script>
     </body>
 </html>

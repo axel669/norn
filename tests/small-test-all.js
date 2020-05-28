@@ -1,45 +1,45 @@
+const assert = require("assert").strict
+
 const norn = require("../index.js")
 
-let t = 0
-const {store, actions} = norn(
-    {
-        list: {
-            initial: () => [],
-            $add: (list, {name, id}) => [...list, {name, id}]
-        },
-        groups: {
-            initial: {},
-            $add: (groups, {id, item}) => ({
-                ...groups,
-                [id]: item
-            }),
-            "list.$add": (_0, action) => {
-                console.log("action", action)
-                return _0
-            }
-        }
+const { actions, store } = norn({
+    test: {
+        initial: 0,
+        $inc: (test) => test + 1,
+        $dec: (test) => test - 1,
+        $add: (test, value) => test + value
     },
-    {
-        "list.$add": (name) => {
-            let id = t
-            t += 1
-            return {name, id}
+    nest: {
+        even: {
+            initial: true,
+            "test.$inc": (test) => test === false,
+            "test.$dec": (test) => test === false,
         },
-        "groups.$add": ["id", "item"]
+        odd: {
+            initial: false,
+            toggle: odd => odd === false
+        }
     }
-)
-
-store.subscribe(
-    (next) => console.log(next)
-)
+})
 
 const main = async () => {
-    console.log(store.state)
-    await actions.list.$add("test")
-    await actions.$batch(
-        ["list.$add", "test2"],
-        ["groups.$add", 0, 100]
+    store.subscribe(
+        (next, _, changes) => {
+            console.log(next)
+            console.log(changes)
+        }
     )
+
+    assert.strictEqual(store.readState().test, 0)
+
+    await actions.test.$inc()
+    assert.strictEqual(store.readState().test, 1)
+
+    await actions.test.$add(10)
+    assert.strictEqual(store.readState().test, 11)
+
+    await actions.nest.odd.toggle()
+    assert.strictEqual(store.readState().nest.odd, true)
 }
 
 main()
