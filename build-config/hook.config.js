@@ -1,23 +1,24 @@
-import resolve from "rollup-plugin-node-resolve"
-import babel from "rollup-plugin-babel"
+import resolve from "@rollup/plugin-node-resolve"
+import commonjs from "@rollup/plugin-commonjs"
+import babel from "@rollup/plugin-babel"
 
 export default {
-    input: "src/norn.js",
+    input: "src/hooks/useStore.js",
     output: [
         {
-            file: "index.js",
+            file: "hooks/index.js",
             format: "cjs"
         },
         {
-            file: "standalone/norn.js",
+            file: "standalone/hooks.js",
             format: "iife",
-            name: "norn",
+            name: "norn.useStore",
             globals: {
                 "react": "React",
             },
         },
         {
-            file: "esm/index.js",
+            file: "esm/hooks/index.js",
             format: "esm"
         }
     ],
@@ -32,7 +33,8 @@ export default {
                 "@babel/plugin-proposal-nullish-coalescing-operator",
             ]
         }),
-        resolve()
+        resolve(),
+        commonjs(),
     ],
     external: [
         "react",
