@@ -1,3 +1,7 @@
+'use strict';
+
+require('svelte/store');
+
 const actions = {
     $set: (source, value) => value,
     $unset: (source, names) => {
@@ -212,4 +216,19 @@ const createStore = descriptor => {
   };
 };
 
-export default createStore;
+const createSvelteStore = description => {
+  const {
+    readState,
+    subscribe,
+    ...actions
+  } = createStore(description);
+  return {
+    update: actions,
+    subscribe: callback => {
+      callback(readState());
+      return subscribe(callback);
+    }
+  };
+};
+
+module.exports = createSvelteStore;

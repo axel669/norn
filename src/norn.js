@@ -1,138 +1,124 @@
-import {useEffect, useState} from "react"
-import update from "@axel669/immutable-update/esm"
+import update from "@axel669/immutable-update"
 
-const subscriptionBus = () => {
-    const handlers = new Map()
+import eventBus from "./event-bus.js"
 
-    return {
-        sub: (handler) => {
-            const id = `${Date.now()}:${Math.random().toString(16)}`
-            handlers.set(id, handler)
-            return () => handlers.delete(id)
-        },
-        send: (data) => {
-            for (const handler of handlers.values()) {
-                handler(data)
-            }
+const fullName = (parent, name = null) => {
+    if (name === null) {
+        return parent.join(".")
+    }
+
+    if (name.includes(".") === true) {
+        return name
+    }
+
+    return [...parent, name].join(".")
+}
+
+const initialValue = (info, parent, key) => {
+    if (info.initial !== undefined) {
+        const name = fullName(parent, key)
+        const value = (typeof info.initial === "function")
+            ? info.initial()
+            : info.initial
+
+        return {
+            [name]: value
         }
     }
+    return buildInitial(info, [...parent, key])
+}
+const buildInitial = (descriptor, parent = []) => {
+    const state = {}
+    for (const [key, info] of Object.entries(descriptor)) {
+        Object.assign(state, initialValue(info, parent, key))
+    }
+    return state
 }
 
-const fullName = (parent, child) =>
-    (parent === null) ? child : `${parent}.${child}`
-const processSource = (name, sourceName, source, shared) => {
-    if (typeof source !== "function") {
-        throw new Error(`Handler is not a function in ${sourceName}:${name}`)
-    }
-    shared.actions[name] = [
-        ...(shared.actions[name] || []),
-        [sourceName, source]
-    ]
-}
-const processRootSource = (name, sourceName, source, shared) => {
-    if (typeof source === "function") {
-        shared.preprocess[name] = (firstArg) => firstArg
-        processSource(name, sourceName, source, shared)
-        return
-    }
+const buildActions = (descriptor, parent = []) => {
+    const entries = Object.entries(descriptor)
 
-    shared.preprocess[name] = (typeof source.args === "function")
-        ? source.args
-        : (...args) => args.reduce(
-            (arg, value, index) => {
-                arg[source.args[index]] = value
-                return arg
-            },
-            {}
+    if (descriptor.initial === undefined) {
+        return entries.reduce(
+            (actions, [key, subDescriptor]) => [
+                ...actions,
+                ...buildActions(subDescriptor, [...parent, key])
+            ],
+            []
         )
-    processSource(name, sourceName, source.handler, shared)
-}
-const processEntry = (name, entry, shared) => {
-    const { initial, ...actionSource } = entry
+    }
 
-    shared.initial[name] = initial
-    for (const [type, source] of Object.entries(actionSource)) {
-        const [actionName, processor] = (type.startsWith("$") === true)
-            ? [fullName(name, type), processRootSource]
-            : [type, processSource]
-        processor(actionName, name, source, shared)
+    const actions = []
+    for (const [key, handler] of entries) {
+        if (key !== "initial") {
+            const path = fullName(parent, key)
+            actions.push([
+                path,
+                fullName(parent),
+                handler,
+            ])
+        }
     }
+    return actions
 }
-const processDescriptor = (parent, desc, shared) => {
-    for (const [name, subDesc] of Object.entries(desc)) {
-        const subName = fullName(parent, name)
-        const next = (subDesc.initial === undefined)
-            ? processDescriptor
-            : processEntry
-        next(subName, subDesc, shared)
-    }
-}
+
 const createStore = (descriptor) => {
-    const shared = {
-        initial: {},
-        actions: {},
-        preprocess: {},
-    }
-    processDescriptor(null, descriptor, shared)
+    const updates = eventBus()
 
-    const subscriptions = subscriptionBus()
-    const internalState = shared.initial
-    let expandedState = update.expand(internalState)
-    const dispatch = async (...actions) => {
-        for (const [action, ...args] of actions) {
-            const arg = shared.preprocess[action.type](...args)
-            for (const [source, func] of shared.actions[action.type]) {
-                internalState[source] = await func(
-                    internalState[source],
-                    arg,
-                    action.type
+    const internalState = buildInitial(descriptor)
+    const stateProps = Object.keys(internalState)
+    let readableState = update.expand(internalState)
+
+    const actionList = buildActions(descriptor)
+
+    const actionHandlers = actionList.reduce(
+        (handlers, [actionPath, target, handler]) => ({
+            ...handlers,
+            [actionPath]: [
+                ...(handlers[actionPath] || []),
+                [target, handler]
+            ]
+        }),
+        {}
+    )
+
+    const $batch = (...commands) => {
+        const prevInternal = {...internalState}
+        for (const [type, params] of commands) {
+            for (const [target, handler] of actionHandlers[type]) {
+                internalState[target] = handler(
+                    internalState[target],
+                    params,
+                    type
                 )
             }
         }
-        expandedState = update.expand(internalState)
-        subscriptions.send(expandedState)
-    }
-    const storeActions = Object.keys(shared.actions)
-        .reduce(
-            (actions, name) => {
-                actions[name] = (...args) => {
-                    dispatch([{ type: name }, ...args])
-                }
-                actions[name].type = name
-                return actions
-            },
-            {}
+        const previousState = readableState
+        readableState = update.expand(internalState)
+        const changes = stateProps.filter(
+            prop => internalState[prop] !== prevInternal[prop]
         )
-
-    return {
-        store: {
-            getState: () => expandedState,
-            currentState: () => expandedState,
-            subscribe: subscriptions.sub,
-        },
-        actions: update.expand(
-            {
-                $batch: (...actions) => {
-                    dispatch(...actions)
-                },
-            },
-            storeActions
-        ),
+        updates.send(readableState, previousState, changes)
     }
-}
-
-const useStore = (store) => {
-    const [current, update] = useState(store.getState())
-
-    useEffect(
-        () => store.subscribe(
-            nextState => update(nextState)
-        ),
-        []
+    const actions = update.expand(
+        {$batch},
+        Object.keys(actionHandlers)
+            .reduce(
+                (actions, type) => ({
+                    ...actions,
+                    [type]: params => $batch([type, params])
+                }),
+                {}
+            )
     )
 
-    return current
+    return {
+        ...actions,
+        readState() {
+            return readableState
+        },
+        subscribe: updates.sub
+    }
 }
-createStore.useStore = useStore
 
 export default createStore

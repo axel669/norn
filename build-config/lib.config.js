@@ -1,5 +1,6 @@
-import resolve from "rollup-plugin-node-resolve"
-import babel from "rollup-plugin-babel"
+import resolve from "@rollup/plugin-node-resolve"
+import commonjs from "@rollup/plugin-commonjs"
+import babel from "@rollup/plugin-babel"
 
 export default {
     input: "src/norn.js",
@@ -9,16 +10,16 @@ export default {
             format: "cjs"
         },
         {
+            file: "esm/index.js",
+            format: "esm"
+        },
+        {
             file: "standalone/norn.js",
             format: "iife",
             name: "norn",
             globals: {
                 "react": "React",
             },
-        },
-        {
-            file: "esm/index.js",
-            format: "esm"
         }
     ],
     plugins: [
@@ -32,7 +33,8 @@ export default {
                 "@babel/plugin-proposal-nullish-coalescing-operator",
             ]
         }),
-        resolve()
+        resolve(),
+        commonjs(),
     ],
     external: [
         "react",

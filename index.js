@@ -1,7 +1,5 @@
 'use strict';
 
-var react = require('react');
-
 const actions = {
     $set: (source, value) => value,
     $unset: (source, names) => {
@@ -102,7 +100,9 @@ update.seq = (source, ...updates) => updates.reduce(
     source
 );
 
-const subscriptionBus = () => {
+var immutableUpdate = update;
+
+const eventBus = () => {
   const handlers = new Map();
   return {
     sub: handler => {
@@ -110,114 +110,108 @@ const subscriptionBus = () => {
       handlers.set(id, handler);
       return () => handlers.delete(id);
     },
-    send: data => {
+    send: (...data) => {
       for (const handler of handlers.values()) {
-        handler(data);
+        handler(...data);
       }
     }
   };
 };
 
-const fullName = (parent, child) => parent === null ? child : `${parent}.${child}`;
+var eventBus_1 = eventBus;
 
-const processSource = (name, sourceName, source, shared) => {
-  if (typeof source !== "function") {
-    throw new Error(`Handler is not a function in ${sourceName}:${name}`);
+const fullName = (parent, name = null) => {
+  if (name === null) {
+    return parent.join(".");
   }
 
-  shared.actions[name] = [...(shared.actions[name] || []), [sourceName, source]];
+  if (name.includes(".") === true) {
+    return name;
+  }
+
+  return [...parent, name].join(".");
 };
 
-const processRootSource = (name, sourceName, source, shared) => {
-  if (typeof source === "function") {
-    shared.preprocess[name] = firstArg => firstArg;
-
-    processSource(name, sourceName, source, shared);
-    return;
+const initialValue = (info, parent, key) => {
+  if (info.initial !== undefined) {
+    const name = fullName(parent, key);
+    const value = typeof info.initial === "function" ? info.initial() : info.initial;
+    return {
+      [name]: value
+    };
   }
 
-  shared.preprocess[name] = typeof source.args === "function" ? source.args : (...args) => args.reduce((arg, value, index) => {
-    arg[source.args[index]] = value;
-    return arg;
-  }, {});
-  processSource(name, sourceName, source.handler, shared);
+  return buildInitial(info, [...parent, key]);
 };
 
-const processEntry = (name, entry, shared) => {
-  const {
-    initial,
-    ...actionSource
-  } = entry;
-  shared.initial[name] = initial;
+const buildInitial = (descriptor, parent = []) => {
+  const state = {};
 
-  for (const [type, source] of Object.entries(actionSource)) {
-    const [actionName, processor] = type.startsWith("$") === true ? [fullName(name, type), processRootSource] : [type, processSource];
-    processor(actionName, name, source, shared);
+  for (const [key, info] of Object.entries(descriptor)) {
+    Object.assign(state, initialValue(info, parent, key));
   }
+
+  return state;
 };
 
-const processDescriptor = (parent, desc, shared) => {
-  for (const [name, subDesc] of Object.entries(desc)) {
-    const subName = fullName(parent, name);
-    const next = subDesc.initial === undefined ? processDescriptor : processEntry;
-    next(subName, subDesc, shared);
+const buildActions = (descriptor, parent = []) => {
+  const entries = Object.entries(descriptor);
+
+  if (descriptor.initial === undefined) {
+    return entries.reduce((actions, [key, subDescriptor]) => [...actions, ...buildActions(subDescriptor, [...parent, key])], []);
   }
+
+  const actions = [];
+
+  for (const [key, handler] of entries) {
+    if (key !== "initial") {
+      const path = fullName(parent, key);
+      actions.push([path, fullName(parent), handler]);
+    }
+  }
+
+  return actions;
 };
 
 const createStore = descriptor => {
-  const shared = {
-    initial: {},
-    actions: {},
-    preprocess: {}
-  };
-  processDescriptor(null, descriptor, shared);
-  const subscriptions = subscriptionBus();
-  const internalState = shared.initial;
-  let expandedState = update.expand(internalState);
+  const updates = eventBus_1();
+  const internalState = buildInitial(descriptor);
+  const stateProps = Object.keys(internalState);
+  let readableState = immutableUpdate.expand(internalState);
+  const actionList = buildActions(descriptor);
+  const actionHandlers = actionList.reduce((handlers, [actionPath, target, handler]) => ({ ...handlers,
+    [actionPath]: [...(handlers[actionPath] || []), [target, handler]]
+  }), {});
 
-  const dispatch = async (...actions) => {
-    for (const [action, ...args] of actions) {
-      const arg = shared.preprocess[action.type](...args);
+  const $batch = (...commands) => {
+    const prevInternal = { ...internalState
+    };
 
-      for (const [source, func] of shared.actions[action.type]) {
-        internalState[source] = await func(internalState[source], arg, action.type);
+    for (const [type, params] of commands) {
+      for (const [target, handler] of actionHandlers[type]) {
+        internalState[target] = handler(internalState[target], params, type);
       }
     }
 
-    expandedState = update.expand(internalState);
-    subscriptions.send(expandedState);
+    const previousState = readableState;
+    readableState = immutableUpdate.expand(internalState);
+    const changes = stateProps.filter(prop => internalState[prop] !== prevInternal[prop]);
+    updates.send(readableState, previousState, changes);
   };
 
-  const storeActions = Object.keys(shared.actions).reduce((actions, name) => {
-    actions[name] = (...args) => {
-      dispatch([{
-        type: name
-      }, ...args]);
-    };
+  const actions = immutableUpdate.expand({
+    $batch
+  }, Object.keys(actionHandlers).reduce((actions, type) => ({ ...actions,
+    [type]: params => $batch([type, params])
+  }), {}));
+  return { ...actions,
 
-    actions[name].type = name;
-    return actions;
-  }, {});
-  return {
-    store: {
-      getState: () => expandedState,
-      currentState: () => expandedState,
-      subscribe: subscriptions.sub
+    readState() {
+      return readableState;
     },
-    actions: update.expand({
-      $batch: (...actions) => {
-        dispatch(...actions);
-      }
-    }, storeActions)
+
+    subscribe: updates.sub
   };
 };
-
-const useStore = store => {
-  const [current, update] = react.useState(store.getState());
-  react.useEffect(() => store.subscribe(nextState => update(nextState)), []);
-  return current;
-};
-
-createStore.useStore = useStore;
 
 module.exports = createStore;

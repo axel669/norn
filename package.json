@@ -1,11 +1,13 @@
 {
   "name": "@axel669/norn",
-  "version": "3.0.0",
+  "version": "4.0.0-alpha.2",
   "description": "lightweight state management library",
   "main": "index.js",
   "scripts": {
     "test": "node tests/small-test-all.js",
-    "build": "rollup -c"
+    "build[Lib]": "rollup -c build-config/lib.config.js",
+    "build[Hook]": "rollup -c build-config/hook.config.js",
+    "build[Svelte]": "rollup -c build-config/svelte.config.js"
   },
   "keywords": [
     "state",
@@ -21,12 +23,20 @@
     "@axel669/immutable-update": "^1.0.2"
   },
   "devDependencies": {
-    "rollup": "^1.14.4",
-    "rollup-plugin-node-resolve": "^5.0.1"
+    "@babel/core": "^7.10.1",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.10.1",
+    "@babel/plugin-proposal-optional-chaining": "^7.10.1",
+    "@babel/plugin-transform-react-jsx": "^7.10.1",
+    "@rollup/plugin-babel": "^5.0.2",
+    "@rollup/plugin-commonjs": "^12.0.0",
+    "@rollup/plugin-node-resolve": "^8.0.0",
+    "rollup": "^2.11.0"
   },
   "files": [
     "/esm",
     "/standalone",
+    "/react",
+    "/svelte",
     "index.js"
   ]
 }
