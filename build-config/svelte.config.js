@@ -3,24 +3,16 @@ import commonjs from "@rollup/plugin-commonjs"
 import babel from "@rollup/plugin-babel"
 
 export default {
-    input: "src/norn.js",
+    input: "src/svelte/state.js",
     output: [
         {
-            file: "index.js",
+            file: "svelte/index.js",
             format: "cjs"
         },
         {
-            file: "esm/index.js",
+            file: "esm/svelte/index.js",
             format: "esm"
         },
-        {
-            file: "standalone/norn.js",
-            format: "iife",
-            name: "norn",
-            globals: {
-                "react": "React",
-            },
-        }
     ],
     plugins: [
         babel({

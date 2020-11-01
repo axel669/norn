@@ -82,11 +82,11 @@ const createStore = (descriptor) => {
         {}
     )
 
-    const $batch = async (...commands) => {
+    const $batch = (...commands) => {
         const prevInternal = {...internalState}
         for (const [type, params] of commands) {
             for (const [target, handler] of actionHandlers[type]) {
-                internalState[target] = await handler(
+                internalState[target] = handler(
                     internalState[target],
                     params,
                     type
@@ -113,13 +113,11 @@ const createStore = (descriptor) => {
     )
 
     return {
-        actions,
-        store: {
-            readState() {
-                return readableState
-            },
-            subscribe: updates.sub
-        }
+        ...actions,
+        readState() {
+            return readableState
+        },
+        subscribe: updates.sub
     }
 }
 

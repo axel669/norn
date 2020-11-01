@@ -1,12 +1,13 @@
 {
   "name": "@axel669/norn",
-  "version": "4.0.0-alpha.0",
+  "version": "4.0.0-alpha.1",
   "description": "lightweight state management library",
   "main": "index.js",
   "scripts": {
     "test": "node tests/small-test-all.js",
     "build[Lib]": "rollup -c build-config/lib.config.js",
-    "build[Hook]": "rollup -c build-config/hook.config.js"
+    "build[Hook]": "rollup -c build-config/hook.config.js",
+    "build[Svelte]": "rollup -c build-config/svelte.config.js"
   },
   "keywords": [
     "state",

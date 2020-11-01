@@ -1,5 +1,7 @@
 import {useEffect, useState} from "react"
 
+import createStore from "../norn.js"
+
 const useStore = (store, changes = null) => {
     const [state, update] = useState(store.readState())
 
@@ -27,5 +29,6 @@ const useStore = (store, changes = null) => {
 
     return state
 }
+createStore.useStore = useStore
 
-export default useStore
+export default createStore

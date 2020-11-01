@@ -183,13 +183,13 @@ const createStore = descriptor => {
     [actionPath]: [...(handlers[actionPath] || []), [target, handler]]
   }), {});
 
-  const $batch = async (...commands) => {
+  const $batch = (...commands) => {
     const prevInternal = { ...internalState
     };
 
     for (const [type, params] of commands) {
       for (const [target, handler] of actionHandlers[type]) {
-        internalState[target] = await handler(internalState[target], params, type);
+        internalState[target] = handler(internalState[target], params, type);
       }
     }
 
@@ -204,15 +204,13 @@ const createStore = descriptor => {
   }, Object.keys(actionHandlers).reduce((actions, type) => ({ ...actions,
     [type]: params => $batch([type, params])
   }), {}));
-  return {
-    actions,
-    store: {
-      readState() {
-        return readableState;
-      },
+  return { ...actions,
 
-      subscribe: updates.sub
-    }
+    readState() {
+      return readableState;
+    },
+
+    subscribe: updates.sub
   };
 };
 

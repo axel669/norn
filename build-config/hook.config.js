@@ -6,20 +6,20 @@ export default {
     input: "src/hooks/useStore.js",
     output: [
         {
-            file: "hooks/index.js",
+            file: "react/index.js",
             format: "cjs"
+        },
+        {
+            file: "esm/react/index.js",
+            format: "esm"
         },
         {
             file: "standalone/hooks.js",
             format: "iife",
-            name: "norn.useStore",
+            name: "norn",
             globals: {
                 "react": "React",
             },
-        },
-        {
-            file: "esm/hooks/index.js",
-            format: "esm"
         }
     ],
     plugins: [
@@ -38,5 +38,6 @@ export default {
     ],
     external: [
         "react",
+        "svlete",
     ]
 }

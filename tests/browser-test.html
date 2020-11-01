@@ -9,7 +9,7 @@
         <script src="https://cdn.axel669.net/react-dom/react-dom.16.13.0.dev.js"></script>
         <script src="https://cdn.axel669.net/aml-tag/aml.1.0.1-beta.1.js"></script>
 
-        <script src="../standalone/norn.js"></script>
+        <!-- <script src="../standalone/norn.js"></script> -->
         <script src="../standalone/hooks.js"></script>
     </head>
     <body>
@@ -17,7 +17,7 @@
         <script type="text/javascript">
             aml.settings.element = React.createElement
 
-            const {actions, store} = norn({
+            const store = norn({
                 test: {
                     initial: 0,
                     $inc: (test) => test + 1,
@@ -44,7 +44,7 @@
 
                     return aml`
                         <div> {
-                            <button onClick=${actions.nest.odd.toggle}> {Toggle}
+                            <button onClick=${store.nest.odd.toggle}> {Toggle}
                             ${odd.toString()}
                         }
                     `
@@ -56,11 +56,11 @@
                 return aml`
                     <div> {
                         <div> {
-                            <button onClick=${actions.test.$dec}> {
+                            <button onClick=${store.test.$dec}> {
                                 dec
                             }
                             ${test}
-                            <button onClick=${actions.test.$inc}> {
+                            <button onClick=${store.test.$inc}> {
                                 inc
                             }
                         }

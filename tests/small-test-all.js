@@ -2,7 +2,7 @@ const assert = require("assert").strict
 
 const norn = require("../index.js")
 
-const { actions, store } = norn({
+const store = norn({
     test: {
         initial: 0,
         $inc: (test) => test + 1,
@@ -32,13 +32,13 @@ const main = async () => {
 
     assert.strictEqual(store.readState().test, 0)
 
-    await actions.test.$inc()
+    store.test.$inc()
     assert.strictEqual(store.readState().test, 1)
 
-    await actions.test.$add(10)
+    store.test.$add(10)
     assert.strictEqual(store.readState().test, 11)
 
-    await actions.nest.odd.toggle()
+    store.nest.odd.toggle()
     assert.strictEqual(store.readState().nest.odd, true)
 }
 
